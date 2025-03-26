@@ -1,41 +1,85 @@
 package image
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
-// getTestImagePath возвращает абсолютный путь к тестовому изображению
-func getTestImagePath() string {
-	// Получаем текущую директорию
-	pwd, _ := os.Getwd()
-	// Формируем путь к тестовому изображению
-	return filepath.Join(pwd, "test_data", "rect.jpg")
+func TestInit(t *testing.T) {
+	// Проверяем создание директории uploads
+	Init()
+	if _, err := os.Stat("uploads"); os.IsNotExist(err) {
+		t.Error("Директория uploads не была создана")
+	}
 }
 
-func TestCalculateImg(t *testing.T) {
-	imagePath := getTestImagePath()
-	t.Logf("Путь к файлу: %s", imagePath)
+func TestGetTestImagePath(t *testing.T) {
+	path := GetTestImagePath()
 
-	// Проверяем существование файла
-	if _, err := os.Stat(imagePath); os.IsNotExist(err) {
-		t.Fatal(err)
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		t.Errorf("Тестовое изображение не найдено по пути: %s", path)
 	}
 
-	pic := &Image{
-		Path: imagePath,
-		Name: "Test",	// h: 600, w: 800 init
+	expectedPath := filepath.Join("internal", "image", "test_data", "rect.jpg")
+	if !strings.Contains(path, expectedPath) {
+		t.Errorf("Путь должен содержать %s, получено %s", expectedPath, path)
+	}
+}
+
+func TestCalculateCompressedSize(t *testing.T) {
+	img := &Image{
+		Path: GetTestImagePath(),
+		Name: "test_image",
 	}
 
-	size, err := pic.CalculateCompressedSize()
+	size, err := img.CalculateCompressedSize(200)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("Ошибка при расчете размера: %v", err)
 	}
-	
-	fmt.Printf("h: %d\tw: %d\n", size.Height, size.Width)
-	if size.Width != MAX_W || size.Height != 300 {
-		t.Fatalf("incorrect aspect ratio")
+
+	if size.Width != 200 {
+		t.Errorf("Ожидалась ширина 200, получено %d", size.Width)
 	}
+}
+
+func TestGetDirToSave(t *testing.T) {
+	img := &Image{
+		Name: "test_image",
+	}
+
+	path := img.GetDirToSave()
+	expectedPath := filepath.Join("results", "test_image_compressed.jpg")
+	if path != expectedPath {
+		t.Errorf("Ожидался путь %s, получено %s", expectedPath, path)
+	}
+
+	if _, err := os.Stat("results"); os.IsNotExist(err) {
+		t.Error("Директория results не была создана")
+	}
+}
+
+func TestCompress(t *testing.T) {
+	img := &Image{
+		Path: GetTestImagePath(),
+		Name: "test_image",
+	}
+
+	err := img.Compress(200)
+	if err != nil {
+		t.Fatalf("Ошибка при сжатии изображения: %v", err)
+	}
+
+	outputPath := img.GetDirToSave()
+	if _, err := os.Stat(outputPath); os.IsNotExist(err) {
+		t.Errorf("Сжатое изображение не было создано по пути: %s", outputPath)
+	}
+
+	err = img.Compress(MAX_W + 1)
+	if err == nil {
+		t.Error("Ожидалась ошибка при превышении максимальной ширины")
+	}
+
+	os.RemoveAll("results")
 }

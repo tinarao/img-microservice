@@ -1,1 +1,9 @@
 test_data/
+
+# file directories
+uploads/
+results/
+coverage.*
+
+# binary file
+image-processor 
