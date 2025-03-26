@@ -27,6 +27,10 @@ func New() *Server {
 }
 
 func (s *Server) setupRoutes() {
+	s.ApiGroup.GET("/hc", func(c *gin.Context) {
+		c.String(http.StatusOK, "Ok")
+	})
+
 	s.router.POST("/upload", s.handleImageUpload)
 }
 

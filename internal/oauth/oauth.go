@@ -27,6 +27,7 @@ func Init(r *gin.RouterGroup) {
 		MaxAge:   maxAge,
 		HttpOnly: true,
 		Secure:   false,
+		Domain:   "localhost",
 	}
 
 	gothic.Store = store
@@ -38,7 +39,7 @@ func Init(r *gin.RouterGroup) {
 	}
 
 	goth.UseProviders(
-		yandex.New(yandexClientKey, yandexSecret, ""),
+		yandex.New(yandexClientKey, yandexSecret, "http://localhost:3000/oauth/yandex/callback"),
 	)
 
 	setupRoutes(r)
@@ -46,10 +47,24 @@ func Init(r *gin.RouterGroup) {
 
 func setupRoutes(r *gin.RouterGroup) {
 	oauth := r.Group("/oauth")
+	oauth.Use(func(c *gin.Context) {
+		c.Header("Access-Control-Allow-Origin", "http://localhost:3000")
+		c.Header("Access-Control-Allow-Credentials", "true")
+		c.Header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+
+		c.Next()
+	})
 
 	oauth.GET("/:provider/callback", Callback)
 	oauth.GET("/:provider/login", Login)
 	oauth.GET("/logout", Logout)
+	oauth.GET("/me", AuthMiddleware, GetCurrentUser)
 }
 
 // RetrieveUserBySession берёт session-куку, вытаскивает из неё данные по сессии
@@ -85,4 +100,14 @@ func AuthMiddleware(c *gin.Context) {
 
 	c.Set("user", account)
 	c.Next()
+}
+
+func GetCurrentUser(c *gin.Context) {
+	user, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	c.JSON(http.StatusOK, user)
 }
