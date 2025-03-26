@@ -11,13 +11,15 @@ import (
 )
 
 type Server struct {
-	router *gin.Engine
+	router   *gin.Engine
+	ApiGroup *gin.RouterGroup
 }
 
 func New() *Server {
-	router := gin.Default()
+	r := gin.Default()
 	server := &Server{
-		router: router,
+		router:   r,
+		ApiGroup: r.Group("api"),
 	}
 
 	server.setupRoutes()

@@ -9,6 +9,7 @@ import (
 
 	"github.com/anthonynsimon/bild/imgio"
 	"github.com/anthonynsimon/bild/transform"
+	gonanoid "github.com/matoous/go-nanoid/v2"
 )
 
 type Image struct {
@@ -52,11 +53,16 @@ func (i *Image) CalculateCompressedSize(toWidth int) (*Size, error) {
 func (i *Image) GetDirToSave() string {
 	resultsDir := filepath.Join("results")
 
+	uuid, err := gonanoid.New()
+	if err != nil {
+		// what
+	}
+
 	if err := os.MkdirAll(resultsDir, 0755); err != nil {
 		log.Printf("Ошибка при создании директории %s: %v", resultsDir, err)
 	}
 
-	fp := filepath.Join("results", fmt.Sprintf("%s_compressed.jpg", i.Name))
+	fp := filepath.Join("results", fmt.Sprintf("%s_%s_compressed.jpg", i.Name, uuid))
 
 	return fp
 }

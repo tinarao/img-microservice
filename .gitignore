@@ -6,4 +6,8 @@ results/
 coverage.*
 
 # binary file
-image-processor 
+api
+image-processor
+
+.env
+*.db

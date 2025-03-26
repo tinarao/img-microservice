@@ -1,5 +1,5 @@
 # Переменные
-BINARY_NAME=image-processor
+BINARY_NAME=api
 MAIN_FILE=cmd/main.go
 
 run: build
