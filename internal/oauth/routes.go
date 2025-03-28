@@ -32,6 +32,7 @@ func Logout(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Failed to logout"})
 		return
 	}
+
 	c.Redirect(http.StatusTemporaryRedirect, "/")
 }
 

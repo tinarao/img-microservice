@@ -8,26 +8,24 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gorilla/sessions"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
 	"github.com/markbates/goth/providers/yandex"
+	"github.com/michaeljs1990/sqlitestore"
 )
 
-var store *sessions.CookieStore
+var store *sqlitestore.SqliteStore
 var AvailableProviders = []string{"yandex"}
 
 const maxAge = 86400 * 30 // 30 days
 
 func Init(r *gin.RouterGroup) {
 	signingSecret := "fdsfsdfsdfdsfsdfsdfsd"
-	store = sessions.NewCookieStore([]byte(signingSecret))
-	store.Options = &sessions.Options{
-		Path:     "/",
-		MaxAge:   maxAge,
-		HttpOnly: true,
-		Secure:   false,
-		Domain:   "localhost",
+
+	var err error
+	store, err = sqlitestore.NewSqliteStore("test.db", "sessions", "/", maxAge, []byte(signingSecret))
+	if err != nil {
+		panic(err)
 	}
 
 	gothic.Store = store
@@ -39,7 +37,7 @@ func Init(r *gin.RouterGroup) {
 	}
 
 	goth.UseProviders(
-		yandex.New(yandexClientKey, yandexSecret, "http://localhost:3000/oauth/yandex/callback"),
+		yandex.New(yandexClientKey, yandexSecret, "http://localhost:3000/api/oauth/yandex/callback"),
 	)
 
 	setupRoutes(r)
