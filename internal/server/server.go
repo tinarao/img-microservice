@@ -2,6 +2,8 @@ package server
 
 import (
 	"fmt"
+	"go-image-processor/internal/keys"
+	"go-image-processor/internal/oauth"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -32,6 +34,9 @@ func (s *Server) setupRoutes() {
 	})
 
 	s.router.POST("/upload", s.handleImageUpload)
+
+	k := s.ApiGroup.Group("/keys")
+	k.GET("/", oauth.AuthMiddleware, keys.GetKeys)
 }
 
 func (s *Server) Run(addr string) error {

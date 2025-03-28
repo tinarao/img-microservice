@@ -65,6 +65,17 @@ func setupRoutes(r *gin.RouterGroup) {
 	oauth.GET("/me", AuthMiddleware, GetCurrentUser)
 }
 
+func AuthMiddleware(c *gin.Context) {
+	account, err := RetrieveUserBySession(c)
+	if err != nil {
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+
+	c.Set("user", account)
+	c.Next()
+}
+
 // RetrieveUserBySession берёт session-куку, вытаскивает из неё данные по сессии
 // и возвращает соответствующего пользователя из бд
 func RetrieveUserBySession(c *gin.Context) (sessionData *db.User, err error) {
@@ -88,24 +99,12 @@ func RetrieveUserBySession(c *gin.Context) (sessionData *db.User, err error) {
 	return user, nil
 }
 
-// AuthMiddleware can be used to protect auth-only routes
-func AuthMiddleware(c *gin.Context) {
-	account, err := RetrieveUserBySession(c)
-	if err != nil {
-		c.AbortWithStatus(http.StatusUnauthorized)
-		return
-	}
-
-	c.Set("user", account)
-	c.Next()
-}
-
 func GetCurrentUser(c *gin.Context) {
-	user, exists := c.Get("user")
+	u, exists := c.Get("user")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-		return
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 	}
 
+	user := u.(*db.User)
 	c.JSON(http.StatusOK, user)
 }
