@@ -2,6 +2,7 @@ package users
 
 import (
 	"fmt"
+	keys "go-image-processor/internal"
 	"go-image-processor/internal/db"
 	"log/slog"
 
@@ -26,12 +27,20 @@ func CompleteAuthorization(user *goth.User) (account *db.User, err error) {
 
 // PersistAccount сохраняет пользователя в базу. Принимает данные от goth.
 func PersistAccount(u *goth.User) (*db.User, error) {
+
+	keys, err := keys.NewKeysPair(u.Email)
+	if err != nil {
+		slog.Error("failed to generate keys pair. do user has email?", "error", err.Error())
+	}
+
 	user := &db.User{
-		Name:      u.Name,
-		Provider:  u.Provider,
-		Email:     u.Email,
-		AvatarURL: &u.AvatarURL,
-		NickName:  &u.NickName,
+		Name:          u.Name,
+		Provider:      u.Provider,
+		Email:         u.Email,
+		AvatarURL:     &u.AvatarURL,
+		NickName:      &u.NickName,
+		PublicApiKey:  keys.PublicKey,
+		PrivateApiKey: keys.PrivateKey,
 	}
 
 	dbr := db.Client.Create(user)
