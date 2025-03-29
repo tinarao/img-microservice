@@ -16,8 +16,6 @@ func GetKeys(c *gin.Context) {
 
 	user := u.(*db.User)
 	c.JSON(http.StatusOK, gin.H{
-		"public_key":  user.PublicApiKey,
-		"private_key": user.PrivateApiKey,
+		"publicKey": user.PublicApiKey,
 	})
-
 }
